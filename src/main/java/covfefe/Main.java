@@ -1,3 +1,5 @@
+package covfefe;
+
 /**
  * @author David Liebl
  */
