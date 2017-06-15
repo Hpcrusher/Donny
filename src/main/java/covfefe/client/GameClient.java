@@ -1,16 +1,14 @@
 package covfefe.client;
 
-import covfefe.types.LoginMessageType;
-import covfefe.types.MazeCom;
-import covfefe.types.MazeComType;
-import covfefe.types.ObjectFactory;
+import covfefe.network.XmlInStream;
+import covfefe.types.*;
 import covfefe.ki.Ki;
 import covfefe.network.XmlOutStream;
 
 import javax.net.ssl.SSLSocketFactory;
+import javax.xml.bind.UnmarshalException;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
 
 /**
  * @author David Liebl
@@ -18,50 +16,44 @@ import java.util.Scanner;
 public final class GameClient {
 
     private static final String GROUPNAME = "covfefe";
-    private static XmlOutStream outToServer;
-    private static Scanner scanner = new Scanner(System.in);
-    private static boolean running = true;
-    private static Socket socket;
-    private static ObjectFactory objectFactory = new ObjectFactory();
+    private XmlOutStream outToServer;
+    private XmlInStream fromServer;
+    private Ki ki;
 
-    private GameClient(Socket socket) throws IOException {
-        GameClient.socket = socket;
-        outToServer = new XmlOutStream(GameClient.socket.getOutputStream());
+    public GameClient() {
     }
 
-    public static void main(String[] args) throws Throwable {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public void initialize() {
         System.setProperty("javax.net.ssl.trustStore", "truststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "1234");
         String serverIP = "localhost";
         int serverPort = 5432;
 
         // Build socket
-        socket = SSLSocketFactory.getDefault().createSocket(serverIP, serverPort);
-        if (socket == null) {
-            throw new IllegalArgumentException();
+        try {
+            Socket socket = SSLSocketFactory.getDefault().createSocket(serverIP, serverPort);
+            outToServer = new XmlOutStream(socket.getOutputStream());
+            fromServer = new XmlInStream(socket.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        // Start client
-        GameClient client = new GameClient(socket);
-        ServerListener clientThread = new ServerListener(socket);
-        clientThread.start();
-        client.start();
-
-        scanner.close();
+        ki = new Ki();
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private void start() {
+    public void start() {
         login();
 
-        while (isRunning()) {
-            // keeps client alive
+        while (true) {
+            MazeCom message = waitForMessage();
+            processReceivedMessage(message);
         }
     }
 
     private void login() {
+        ObjectFactory objectFactory = new ObjectFactory();
         MazeCom mc_login = objectFactory.createMazeCom();
         LoginMessageType login = objectFactory.createLoginMessageType();
         mc_login.setMcType(MazeComType.LOGIN);
@@ -70,16 +62,56 @@ public final class GameClient {
         outToServer.write(mc_login);
     }
 
-    static void awaitMoveCallBack(MazeCom oldSituation) {
-        outToServer.write(Ki.calculateTurn(oldSituation));
+    private void processReceivedMessage(MazeCom msg) {
+        if (msg == null) {
+            return;
+        }
+
+        switch (msg.getMcType()) {
+
+            case LOGINREPLY:
+                System.out.println("Successfully logged in.");
+                break;
+            case AWAITMOVE:
+                System.out.println("Server awaits move.");
+                awaitMove(msg.getAwaitMoveMessage());
+                break;
+            case ACCEPT:
+                System.out.println("Server accepted last sent message.");
+                break;
+            case WIN:
+                WinMessageType winMessage = msg.getWinMessage();
+                if (winMessage != null) {
+                    if (winMessage.getWinner() != null) {
+                        System.out.println(winMessage.getWinner() + " has won the game.");
+                    }
+                }
+                exit();
+                break;
+            case DISCONNECT:
+                System.out.println("Lost Connection to the server.");
+                exit();
+                break;
+        }
+    }
+
+    private MazeCom waitForMessage() {
+        try {
+            return fromServer.readMazeCom();
+        } catch (UnmarshalException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
-    static void exitCallBack() {
+    private void awaitMove(AwaitMoveMessageType oldSituation) {
+        outToServer.write(ki.calculateTurn(oldSituation));
+    }
+
+
+    private void exit() {
         System.exit(0);
     }
 
-    static boolean isRunning() {
-        return running;
-    }
 }
