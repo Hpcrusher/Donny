@@ -16,14 +16,13 @@ import java.net.Socket;
 public final class GameClient {
 
     private static final String GROUPNAME = "covfefe";
+    public static Integer PLAYER_ID = null;
     private XmlOutStream outToServer;
     private XmlInStream fromServer;
     private Ki ki;
 
     public GameClient() {
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void initialize() {
         System.setProperty("javax.net.ssl.trustStore", "truststore.jks");
@@ -70,6 +69,8 @@ public final class GameClient {
         switch (msg.getMcType()) {
 
             case LOGINREPLY:
+                LoginReplyMessageType loginReplyMessage = msg.getLoginReplyMessage();
+                PLAYER_ID = loginReplyMessage.getNewID();
                 System.out.println("Successfully logged in.");
                 break;
             case AWAITMOVE:

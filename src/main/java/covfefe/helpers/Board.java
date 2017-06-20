@@ -445,7 +445,7 @@ public class Board extends BoardType {
         PathInfo[][] erreichbar = new PathInfo[7][7];
         for (int i = 0; i < erreichbar.length; i++) {
             for (int j = 0; j < erreichbar[i].length; j++) {
-                erreichbar[i][j]=new PathInfo();
+                erreichbar[i][j] = new PathInfo();
             }
         }
         return getAllReachablePositionsMatrix(new Position(position), erreichbar, 0, null);
@@ -509,7 +509,7 @@ public class Board extends BoardType {
                 CardType.Pin pinsOnCard = getCard(i, j).getPin();
                 for (Integer pin : pinsOnCard.getPlayerID()) {
                     if (pin == PlayerID) {
-                        Position pos = new Position(i,j);
+                        Position pos = new Position(i, j);
                         return pos;
                     }
                 }
