@@ -6,6 +6,7 @@ import covfefe.helpers.Card;
 import covfefe.helpers.Position;
 import covfefe.types.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -38,9 +39,14 @@ public final class Ki {
                 for (int col = 0; col < 7; col++) {
                     Position shiftPosition = new Position(row, col);
                     if (shiftPosition.isLoosePosition()) {
-                        if (checkMove(copyShiftCard, board, shiftPosition, currentTreasure)) {
-                            System.out.println("Hab einen Weg gefunden!");
-                            return getMazeCom(board.findTreasure(board.getTreasure()), copyShiftCard, shiftPosition);
+                        PositionType positionType = checkMove(copyShiftCard, board, shiftPosition, currentTreasure);
+                        if (positionType != null) {
+                            System.out.println(positionType);
+                            final MazeCom mazeCom = getMazeCom(positionType, copyShiftCard, shiftPosition);
+                            if (board.validateTransition(mazeCom.getMoveMessage(), GameClient.PLAYER_ID)) {
+                                System.out.println("Hab einen Weg gefunden!");
+                                return mazeCom;
+                            }
                         }
                     }
                 }
@@ -51,12 +57,9 @@ public final class Ki {
 
         MoveMessageType moveMessageType = new MoveMessageType();
         moveMessageType.setShiftCard(shiftCard);
-        PositionType shiftCardPosition = objectFactory.createPositionType();
 
-        shiftCardPosition.setRow(0);
-        shiftCardPosition.setCol(1);
-
-        moveMessageType.setShiftPosition(shiftCardPosition);
+        final PositionType randomShiftPosition = getRandomShiftPosition(board.getForbidden());
+        moveMessageType.setShiftPosition(randomShiftPosition);
 
         board.proceedShift(moveMessageType);
 
@@ -65,11 +68,15 @@ public final class Ki {
         List<Position> allReachablePositions = board.getAllReachablePositions(myPosition);
 
         Random random = new Random();
-        return getMazeCom(allReachablePositions.get(random.nextInt(allReachablePositions.size()-1)+1), shiftCard, shiftCardPosition);
+        final int size = allReachablePositions.size();
+        int index = 0;
+        if (size > 1) {
+            index = random.nextInt(size - 1) + 1;
+        }
+        return getMazeCom(allReachablePositions.get(index), shiftCard, randomShiftPosition);
     }
 
-    private boolean checkMove(CardType shiftCard, Board board, PositionType shiftPosition, TreasureType treasure) {
-        System.out.println(treasure.name());
+    private PositionType checkMove(CardType shiftCard, final Board board, PositionType shiftPosition, TreasureType treasure) {
         MoveMessageType move = new MoveMessageType();
         move.setShiftCard(shiftCard);
 
@@ -77,10 +84,12 @@ public final class Ki {
         Board cBoard = board.fakeShift(move);
 
         PositionType treasurePosition = cBoard.findTreasure(treasure);
+        if (treasurePosition == null) {
+            return null;
+        }
         List<Position> allReachablePositions = cBoard.getAllReachablePositions(cBoard.findPlayer(GameClient.PLAYER_ID));
         Optional<Position> position1 = allReachablePositions.stream().filter(position -> position.getCol() == treasurePosition.getCol() && position.getRow() == treasurePosition.getRow()).findAny();
-        position1.ifPresent(System.out::println);
-        return position1.isPresent();
+        return position1.orElse(null);
     }
 
     private MazeCom getMazeCom(PositionType pinPosition, CardType shiftCard, PositionType shiftCardPosition) {
@@ -96,6 +105,44 @@ public final class Ki {
         mazeCom.setMoveMessage(moveMessageType);
 
         return mazeCom;
+    }
+
+    public PositionType getRandomShiftPosition(PositionType forbidden) {
+        ArrayList<int[]> list = new ArrayList<>();
+        list.add(new int[]{0, 1});
+        list.add(new int[]{0, 3});
+        list.add(new int[]{0, 5});
+
+        list.add(new int[]{1, 0});
+        list.add(new int[]{3, 0});
+        list.add(new int[]{5, 0});
+
+        list.add(new int[]{1, 6});
+        list.add(new int[]{3, 6});
+        list.add(new int[]{5, 6});
+
+        list.add(new int[]{6, 1});
+        list.add(new int[]{6, 3});
+        list.add(new int[]{6, 5});
+
+        if (forbidden != null) {
+            for (int[] i : list) {
+                if (i[0] == forbidden.getRow() && i[1] == forbidden.getCol()) {
+                    list.remove(i);
+                    break;
+                }
+            }
+        }
+
+        PositionType position = objectFactory.createPositionType();
+
+        int rnd = (int) (Math.random() * list.size());
+        int[] posVals = list.get(rnd);
+
+        position.setRow(posVals[0]);
+        position.setCol(posVals[1]);
+
+        return position;
     }
 
 }
