@@ -84,7 +84,7 @@ public final class GameClient {
                 WinMessageType winMessage = msg.getWinMessage();
                 if (winMessage != null) {
                     if (winMessage.getWinner() != null) {
-                        System.out.println(winMessage.getWinner() + " has won the game.");
+                        System.out.println(winMessage.getWinner().getValue() + " has won the game.");
                     }
                 }
                 exit();

@@ -33,28 +33,37 @@ public final class Ki {
         CardType copyShiftCard;
         for (int i = 0; i <= 270; i += 90) {
             copyShiftCard = new Card(defaultCard.getShape(), Card.Orientation.fromValue(i), defaultCard.getTreasure());
+            final MazeCom mazeCom = searchForDirectMove(currentTreasure, board, copyShiftCard);
+            if (mazeCom != null) {
+                return mazeCom;
+            }
+        }
+        System.out.println("Kein direkter Weg zum Ziel!");
 
+        return doRandomMove(shiftCard, board);
+    }
 
-            for (int row = 0; row < 7; row++) {
-                for (int col = 0; col < 7; col++) {
-                    Position shiftPosition = new Position(row, col);
-                    if (shiftPosition.isLoosePosition()) {
-                        PositionType positionType = checkMove(copyShiftCard, board, shiftPosition, currentTreasure);
-                        if (positionType != null) {
-                            System.out.println(positionType);
-                            final MazeCom mazeCom = getMazeCom(positionType, copyShiftCard, shiftPosition);
-                            if (board.validateTransition(mazeCom.getMoveMessage(), GameClient.PLAYER_ID)) {
-                                System.out.println("Hab einen Weg gefunden!");
-                                return mazeCom;
-                            }
+    private MazeCom searchForDirectMove(TreasureType currentTreasure, Board board, CardType copyShiftCard) {
+        for (int row = 0; row < 7; row++) {
+            for (int col = 0; col < 7; col++) {
+                Position shiftPosition = new Position(row, col);
+                if (shiftPosition.isLoosePosition() && !shiftPosition.equals(board.getForbidden())) {
+                    PositionType positionType = checkMove(copyShiftCard, board, shiftPosition, currentTreasure);
+                    if (positionType != null) {
+                        System.out.println(positionType);
+                        final MazeCom mazeCom = getMazeCom(positionType, copyShiftCard, shiftPosition);
+                        if (board.validateTransition(mazeCom.getMoveMessage(), GameClient.PLAYER_ID)) {
+                            System.out.println("Hab einen Weg gefunden!");
+                            return mazeCom;
                         }
                     }
                 }
             }
-
         }
-        System.out.println("Kein weg zum Ziel!");
+        return null;
+    }
 
+    private MazeCom doRandomMove(CardType shiftCard, Board board) {
         MoveMessageType moveMessageType = new MoveMessageType();
         moveMessageType.setShiftCard(shiftCard);
 
