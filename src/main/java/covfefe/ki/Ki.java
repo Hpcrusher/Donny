@@ -97,7 +97,7 @@ public final class Ki {
         ArrayList<PositionType> shiftPostitions = getAllShiftPositions(board.getForbidden());
 
         Board fakeBoard;
-        Position myPosition = board.findPlayer(GameClient.PLAYER_ID);
+        Position myPosition;
 
         int bestShift = 0;
         int bestPos = 0;
@@ -115,7 +115,7 @@ public final class Ki {
 
                 List<Position> allReachablePositions = fakeBoard.getAllReachablePositions(myPosition);
 
-                int[] tmp = getBest(allReachablePositions, fakeBoard, treasure);
+                int[] tmp = getBest(allReachablePositions, fakeBoard, treasure, myPosition);
 
                 if (tmp[0]<best){
                     best = tmp[0];
@@ -138,12 +138,18 @@ public final class Ki {
         return getMazeCom(bestGoTo, allShifts.get(bestShift), shiftPostitions.get(bestPos));
     }
 
-    private int[] getBest(List<Position> reachables, Board board, TreasureType treasure){
+    private int[] getBest(List<Position> reachables, Board board, TreasureType treasure, Position curr){
         int[] ret = new int[2];
         PositionType treasurePos = board.findTreasure(treasure);
         ret[0] = 10000;
         for (int i = 0; i < reachables.size(); i++) {
-            int dif = Math.abs(treasurePos.getCol()-reachables.get(i).getCol())+Math.abs(treasurePos.getRow()-reachables.get(i).getRow());
+            int dif = 10000;
+            if (treasurePos != null) {
+                dif = Math.abs(treasurePos.getCol() - reachables.get(i).getCol()) + Math.abs(treasurePos.getRow() - reachables.get(i).getRow());
+            }
+            if (reachables.get(i).getCol() == curr.getCol() && reachables.get(i).getRow() == curr.getRow()){
+                dif++;
+            }
             if (dif < ret[0]){
                 ret[0] = dif;
                 ret[1] = i;
@@ -184,7 +190,7 @@ public final class Ki {
         return mazeCom;
     }
 
-    public PositionType getRandomShiftPosition(PositionType forbidden) {
+    private PositionType getRandomShiftPosition(PositionType forbidden) {
         ArrayList<int[]> list = new ArrayList<>();
         list.add(new int[]{0, 1});
         list.add(new int[]{0, 3});
@@ -222,7 +228,7 @@ public final class Ki {
         return position;
     }
 
-    public ArrayList<PositionType> getAllShiftPositions(PositionType forbidden) {
+    private ArrayList<PositionType> getAllShiftPositions(PositionType forbidden) {
         ArrayList<int[]> list = new ArrayList<>();
         list.add(new int[]{0, 1});
         list.add(new int[]{0, 3});
@@ -251,10 +257,10 @@ public final class Ki {
 
         ArrayList<PositionType> ret = new ArrayList<>();
 
-        for (int i = 0; i < list.size(); i++) {
+        for (int[] aList : list) {
             PositionType position = objectFactory.createPositionType();
-            position.setRow(list.get(i)[0]);
-            position.setCol(list.get(i)[1]);
+            position.setRow(aList[0]);
+            position.setCol(aList[1]);
             ret.add(position);
         }
 
