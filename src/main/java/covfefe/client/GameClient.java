@@ -24,10 +24,10 @@ public final class GameClient {
     public GameClient() {
     }
 
-    public void initialize() {
+    public void initialize(String gameServerIp) {
         System.setProperty("javax.net.ssl.trustStore", "truststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "1234");
-        String serverIP = "localhost";
+        String serverIP = gameServerIp == null || "".equals(gameServerIp.trim()) ? "localhost" : gameServerIp;
         int serverPort = 5432;
 
         // Build socket
