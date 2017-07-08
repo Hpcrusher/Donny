@@ -38,7 +38,6 @@ public final class Ki {
                 return mazeCom;
             }
         }
-        System.out.println("Kein direkter Weg zum Ziel!");
 
         return doPerfectMove(shiftCard, board, currentTreasure);
     }
@@ -50,10 +49,8 @@ public final class Ki {
                 if (shiftPosition.isLoosePosition() && !shiftPosition.equals(board.getForbidden())) {
                     PositionType positionType = checkMove(copyShiftCard, board, shiftPosition, currentTreasure);
                     if (positionType != null) {
-                        System.out.println(positionType);
                         final MazeCom mazeCom = getMazeCom(positionType, copyShiftCard, shiftPosition);
                         if (board.validateTransition(mazeCom.getMoveMessage(), GameClient.PLAYER_ID)) {
-                            System.out.println("Hab einen Weg gefunden!");
                             return mazeCom;
                         }
                     }
@@ -130,10 +127,6 @@ public final class Ki {
         moveMessageType.setShiftPosition(shiftPostitions.get(bestPos));
         board.proceedShift(moveMessageType);
 
-        System.out.println(bestPos);
-        System.out.println(bestShift);
-        System.out.println(best);
-        System.out.println(bestGoTo.getRow() +", "+bestGoTo.getCol());
 
         return getMazeCom(bestGoTo, allShifts.get(bestShift), shiftPostitions.get(bestPos));
     }

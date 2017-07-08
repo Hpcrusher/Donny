@@ -5,6 +5,7 @@ import covfefe.types.*;
 import covfefe.ki.Ki;
 import covfefe.network.XmlOutStream;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 import javax.xml.bind.UnmarshalException;
 import java.io.IOException;
@@ -24,15 +25,15 @@ public final class GameClient {
     public GameClient() {
     }
 
-    public void initialize() {
+    public void initialize(String gameServerIp) {
         System.setProperty("javax.net.ssl.trustStore", "truststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "1234");
-        String serverIP = "localhost";
-        int serverPort = 5432;
+        String serverIP = gameServerIp == null || gameServerIp.isEmpty() ? "localhost" : gameServerIp;
+        int serverPort = 5123;
 
         // Build socket
         try {
-            Socket socket = SSLSocketFactory.getDefault().createSocket(serverIP, serverPort);
+            Socket socket = SocketFactory.getDefault().createSocket(serverIP, serverPort);
             outToServer = new XmlOutStream(socket.getOutputStream());
             fromServer = new XmlInStream(socket.getInputStream());
         } catch (IOException e) {
