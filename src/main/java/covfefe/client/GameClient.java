@@ -16,7 +16,7 @@ import java.net.Socket;
  */
 public final class GameClient {
 
-    private static final String GROUPNAME = "covfefeMaster";
+    private static final String GROUPNAME = "covfefe";
     public static Integer PLAYER_ID = null;
     private XmlOutStream outToServer;
     private XmlInStream fromServer;
